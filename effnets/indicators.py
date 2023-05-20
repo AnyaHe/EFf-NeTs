@@ -12,7 +12,7 @@ a = 4
 c = 5
 
 # Import input data from simulated network
-data = pd.read_excel(r'inputdata.xlsx',
+data = pd.read_excel(r'data/inputdata.xlsx',
                      sheet_name='Input')
 df = pd.DataFrame(data, columns=['Scenario', 'Alternative', 'Customer Group', 'Group Share', 'Cost Share', 'Peak Share',
                                  'Capacity Share', 'Energy Share', 'Electricity Purchased', 'Simultaneous Peak',
