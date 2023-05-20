@@ -155,10 +155,3 @@ def addnames(NA):
 
     return NA
 
-
-total_weights = \
-        pd.concat([get_relative_weights_dso(),
-                   get_relative_weights_authority(),
-                   get_relative_weights_regulator(),
-                   get_relative_weights_politics(),
-                   get_relative_weights_third()])
