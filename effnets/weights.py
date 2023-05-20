@@ -162,4 +162,3 @@ total_weights = \
                    get_relative_weights_regulator(),
                    get_relative_weights_politics(),
                    get_relative_weights_third()])
-total_weights.to_csv("data/weights.csv")
