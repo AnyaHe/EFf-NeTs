@@ -3,97 +3,25 @@ from numpy.linalg import eig
 import pandas as pd
 
 
-def get_relative_weights_dso():
+def get_relative_weights_stakeholder(weighting_dict, stakeholder):
     """
-    Method to extract relative weights with pairwise comparison of DSO representative.
-
-    :return:
-    """
-    W = np.array([[1, 7, 9],
-                  [1/7, 1, 3],
-                  [1/9, 1/3, 1]])
-    W_1 = np.array([[1, 1/5],
-                    [5, 1]])
-    W_3 = np. array([[1, 1],
-                     [1, 1]])
-    weights = addnames(extract_weights(W, W_1, W_3))
-    weights['Stakeholder'] = ['DSO']
-    return weights.set_index("Stakeholder")
-
-
-def get_relative_weights_authority():
-    """
-    Method to extract relative weights with pairwise comparison of representative of
-    authority.
-
-    :return:
-    """
-    W = np.array([[1, 6, 5],
-                  [1/6, 1, 2],
-                  [1/5, 1/2, 1]])
-    W_1 = np.array([[1, 3],
-                    [1/3, 1]])
-    W_3 = np. array([[1, 1/4],
-                     [4, 1]])
-    weights = addnames(extract_weights(W, W_1, W_3))
-    weights['Stakeholder'] = ['Authority']
-    return weights.set_index("Stakeholder")
-
-
-def get_relative_weights_regulator():
-    """
-    Method to extract relative weights with pairwise comparison of regulator
+    Method to extract relative weights with pairwise comparison of stakehodler
     representative.
 
-    :return:
+
+    :param weighting_dict: dict
+
+    :param stakeholder:
+    :return: pd.DataFrame
+        column names: see addnames()
+        index: input stakeholder
     """
-    W = np.array([[1, 9, 7],
-                  [1/9, 1, 2],
-                  [1/7, 1/2, 1]])
-    W_1 = np.array([[1, 1/7],
-                    [7, 1]])
-    W_3 = np. array([[1, 1],
-                    [1, 1]])
-    weights = addnames(extract_weights(W, W_1, W_3))
-    weights['Stakeholder'] = ['Regulator']
-    return weights.set_index("Stakeholder")
-
-
-def get_relative_weights_politics():
-    """
-    Method to extract relative weights with pairwise comparison of representative from
-    politics.
-
-    :return:
-    """
-    W = np.array([[1, 1/5, 1/5],
-                  [5, 1, 1],
-                  [5, 1, 1]])
-    W_1 = np.array([[1, 5],
-                    [1/5, 1]])
-    W_3 = np. array([[1, 3],
-                    [1/3, 1]])
-    weights = addnames(extract_weights(W, W_1, W_3))
-    weights['Stakeholder'] = ['Politics']
-    return weights.set_index("Stakeholder")
-
-
-def get_relative_weights_third():
-    """
-    Method to extract relative weights with pairwise comparison of third party
-    representative.
-
-    :return:
-    """
-    W = np.array([[1, 5, 1],
-                  [1/5, 1, 1/5],
-                  [1, 5, 1]])
-    W_1 = np.array([[1, 5],
-                    [1/5, 1]])
-    W_3 = np. array([[1, 1/3],
-                    [3, 1]])
-    weights = addnames(extract_weights(W, W_1, W_3))
-    weights['Stakeholder'] = ['Third']
+    weights = addnames(extract_weights(
+        weighting_dict["Main"],
+        weighting_dict["Efficient Grid"],
+        weighting_dict["Political Objectives"]
+    ))
+    weights['Stakeholder'] = [stakeholder]
     return weights.set_index("Stakeholder")
 
 
@@ -155,11 +83,3 @@ def addnames(NA):
 
     return NA
 
-
-total_weights = \
-        pd.concat([get_relative_weights_dso(),
-                   get_relative_weights_authority(),
-                   get_relative_weights_regulator(),
-                   get_relative_weights_politics(),
-                   get_relative_weights_third()])
-total_weights.to_csv("data/weights.csv")
