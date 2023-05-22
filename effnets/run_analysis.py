@@ -1,9 +1,8 @@
 import pandas as pd
 import numpy as np
 
-from weights import get_relative_weights_authority, get_relative_weights_dso, \
-    get_relative_weights_politics, get_relative_weights_regulator, \
-    get_relative_weights_third, addnames
+from data.expert_weighting import expert_pairwise_comparison_dict
+from weights import get_relative_weights_stakeholder, addnames
 from indicators import pvcost_ratio, fairness
 from results import results, r_matrix
 
@@ -37,29 +36,24 @@ df['Weighted Efficiency Ratio'] = \
     (np.log10(df['Energy Ratio']) * df['Group Share']).abs()
 
 # Generating ranking of alternative for every expert
-EW = addnames(pd.DataFrame({
+equal_weights = addnames(pd.DataFrame({
     0: {0: 1/6, 1: 1/6, 2: 1/3, 3: 1/6, 4: 1/6}
 }).T)
-results_EW = results(df, a, EW)
-results_DSO = results(df, a, get_relative_weights_dso())
-results_Authority = results(df, a, get_relative_weights_authority())
-results_Regulator = results(df, a, get_relative_weights_regulator())
-results_Politics = results(df, a, get_relative_weights_politics())
-results_Third = results(df, a, get_relative_weights_third())
-
+results_EW = results(df, a, equal_weights)
 results_dict = {
-    "Equal Weights": results_EW,
-    "Authority": results_Authority,
-    "Politics": results_Politics,
-    "DSO": results_DSO,
-    "Regulator": results_Regulator,
-    "Third": results_Third,
-}
+    "Equal Weights": results_EW}
+# get results with expert weighting
+expert_weights = expert_pairwise_comparison_dict()
+for expert in ["Authority", "Politics", "DSO", "Regulator", "Third Party"]:
+    results_dict[expert] = results(df, a, get_relative_weights_stakeholder(
+        expert_weights[expert], expert
+    ))
+
 # reformat and save results
 for scenario in ['Scenario 1', 'Scenario 2', 'Scenario 3', 'Scenario 4']:
     tmp = pd.DataFrame()
-    for weighting in \
-            ["Equal Weights", "Authority", "Politics", "Third", "DSO", "Regulator"]:
+    for weighting in ["Equal Weights", "Authority", "Politics", "Third Party", "DSO",
+                      "Regulator"]:
         tmp[weighting] = results_dict[weighting][scenario]
     tmp.to_csv(f"results/end_rating_{scenario}.csv")
 
@@ -82,15 +76,22 @@ p.to_excel(r'results/pvrentability.xlsx')
 
 df.to_excel(r'results/df.xlsx')
 total_weights = \
-        pd.concat([get_relative_weights_dso(),
-                   get_relative_weights_authority(),
-                   get_relative_weights_regulator(),
-                   get_relative_weights_politics(),
-                   get_relative_weights_third()])
+        pd.concat([get_relative_weights_stakeholder(expert_weights["DSO"], "DSO"),
+                   get_relative_weights_stakeholder(expert_weights["Authority"],
+                                                    "Authority"),
+                   get_relative_weights_stakeholder(expert_weights["Regulator"],
+                                                    "Regulator"),
+                   get_relative_weights_stakeholder(expert_weights["Politics"],
+                                                    "Politics"),
+                   get_relative_weights_stakeholder(expert_weights["Third Party"],
+                                                    "Third Party")])
 total_weights.to_excel(r'results/weighting.xlsx')
 
-e = pd.concat([results_DSO, results_Authority, results_Regulator,
-               results_Politics, results_Third])
+e = pd.concat([results_dict["DSO"],
+               results_dict["Authority"],
+               results_dict["Regulator"],
+               results_dict["Politics"],
+               results_dict["Third Party"]])
 e.to_excel(r'results/endresults.xlsx')
 
 # Calculations - LEVEL ALTERNATIVES (AGGREGATION OF CUSTOMER GROUPS) -
