@@ -1,8 +1,8 @@
-# libraries
-import numpy as np
-import matplotlib.pyplot as plt
-from indicators import *
-from weights import *
+import pandas as pd
+
+from indicators import usage_related, capacity_related, fairness, expansion_der,\
+    electricity_related
+from weights import addnames
 
 
 def r_matrix(dt, sf, af):
@@ -19,38 +19,70 @@ def r_matrix(dt, sf, af):
     return r
 
 
-r = pd.concat([r_matrix(df, 1, a), r_matrix(df, 2, a),
-               r_matrix(df, 3, a), r_matrix(df, 4, a)])
-r.to_excel(r'results/resultmatrix.xlsx')
+def result_matrix(dt, sf, af):
+    """
+    Normalised results for indicators
 
-f = pd.concat([fairness(df, 1, a), fairness(df, 2, a),
-               fairness(df, 3, a), fairness(df, 4, a)])
-f['Scenario'] = [1, 2, 3, 4]
-f.set_index('Scenario', inplace = True)
-f.to_excel(r'results/fairness.xlsx')
+    :param dt: pd.DataFrame
+        input data
+    :param sf: int
+        scenario to be analysed
+    :param af: int
+        total number of alternatives
+    :return:
+    """
+    UR = usage_related(dt, sf, af)
+    CR = capacity_related(dt, sf, af)
+    N = fairness(dt, sf, af)
+    FR = N.div(N.sum(axis=1), axis=0)
+    RR = expansion_der(dt, sf, af)
+    EF = electricity_related(dt, sf, af)
+    rf = pd.concat([UR, CR, FR, RR, EF], ignore_index=True)
+    return addnames(rf.T).T
 
-p = pd.concat([pvcost_ratio(df, 1, a), pvcost_ratio(df, 2, a),
-               pvcost_ratio(df, 3, a), pvcost_ratio(df, 4, a)])
-p['Scenario'] = [1, 2, 3, 4]
-p.set_index('Scenario', inplace = True)
-p.to_excel(r'results/pvrentability.xlsx')
 
-df.to_excel(r'results/df.xlsx')
-total_weights.to_excel(r'results/weighting.xlsx')
+def end_result(dt, sf, af, weights):
+    """
+    Combining indicator results with criteria's weights to generate ranking
 
-e = pd.concat([results_DSO, results_Authority, results_Regulator,
-               results_Politics, results_Third])
-e.to_excel(r'results/endresults.xlsx')
+    :param dt: pd.DataFrame
+        input data
+    :param sf: int
+        scenario to be analysed
+    :param af: int
+        total number of alternatives
+    :param weights: pd.DataFrame
+        dataframe with weighting of indicators
+    :return:
+    """
+    N = result_matrix(dt, sf, af)
 
-# Calculations - LEVEL ALTERNATIVES (AGGREGATION OF CUSTOMER GROUPS) - for additional charts
-rf = pd.DataFrame()
-for i in range(1, s+1):
-    for j in range(1, a+1):
-        rf.loc[i*a-a+j, 'Scenario'] = i
-        rf.loc[i*a-a+j, 'Alternative'] = j
-        fl = df[(df['Scenario'] == i) & (df['Alternative'] == j)]
-        rf.loc[i*a-a+j, 'Aggregated Peak'] = fl['Simultaneous Peak'].sum()
-        rf.loc[i*a-a+j, 'Contracted Capacity'] = fl['Contracted Capacity'].sum()
-        rf.loc[i*a-a+j, 'Electricity Purchased'] = fl['Electricity Purchased'].sum()
+    for j in range(1, len(N.columns) + 1):
+        N[j] = N[j] * weights.transpose().iloc[:, 0]
 
-rf.to_excel(r'results/values.xlsx')
+    R = N.sum()
+
+    return R
+
+
+def results(dt, af, weights):
+    """
+    Aggregating results for all scenarios
+
+    :param dt: pd.DataFrame
+        input data
+    :param af: int
+        total number of alternatives
+    :param weights: pd.DataFrame
+        dataframe with weighting of indicators
+    :return:
+    """
+    S1 = end_result(dt, 1, af, weights)
+    S2 = end_result(dt, 2, af, weights)
+    S3 = end_result(dt, 3, af, weights)
+    S4 = end_result(dt, 4, af, weights)
+
+    S = pd.concat([S1, S2, S3, S4], axis=1)
+    S.columns = ['Scenario 1', 'Scenario 2', 'Scenario 3', 'Scenario 4']
+
+    return S
