@@ -30,8 +30,23 @@ def priorities(pairwise_comparison_matrix):
     Method to extract rated eigenvector for weighting
 
     :param pairwise_comparison_matrix: np.array
-        NxN-matrix with pairwise comparison of N criteria. Todo: explain further
-    :return:
+        NxN-matrix with pairwise comparison of N criteria. Comparative ratings are:
+        1: Equally preferred
+        2: Equally to moderately preferred
+        3: Moderately preferred
+        4: Moderately to strongly preferred
+        5: Strongly preferred
+        6: Strongly to very strongly preferred
+        7: Very strongly preferred
+        8: Very strongly to extremely preferred
+        9: Extremely preferred
+        Example matrix with criteria a and b where a is moderately preferred to b:
+            a    b
+        a [[1,   3],
+        b [1/3,  1]]
+    :return: np.array
+        Relative weights of N criteria, in example above for [a, b]
+        [0.75, 0.25]
     """
     # Eigenvector resulting in criteria's weights
     eig_vec = eig(pairwise_comparison_matrix)[1][:, 0]
