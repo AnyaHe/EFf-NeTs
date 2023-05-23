@@ -8,13 +8,13 @@ from weights import add_names_criteria
 def get_performance_indicators_scenario_with_names(dt, sf, af):
     result_matrix = get_performance_indicators_scenario(dt, sf, af)
     result_matrix.columns = \
-        ['1 Volumetric Tariff', '2 Monthly Power Peak', '3 Yearly Power Peak',
-         '4 Capacity Tariff']
-    result_matrix['Criteria'] = ['1 Reflection of Usage-Related Costs',
-                                 '2 Reflection of Capacity-Related Costs',
-                                 '3 Fairness and Customer Acceptance',
-                                 '4 Expansion of DER',
-                                 '5 Efficient Electricity Usage']
+        ['Volumetric Tariff', 'Monthly Power Peak', 'Yearly Power Peak',
+         'Capacity Tariff']
+    result_matrix['Criteria'] = ['Reflection of Usage-Related Costs',
+                                 'Reflection of Capacity-Related Costs',
+                                 'Fairness and Customer Acceptance',
+                                 'Expansion of DER',
+                                 'Efficient Electricity Usage']
     result_matrix['Scenario'] = [sf, sf, sf, sf, sf]
 
     return result_matrix
