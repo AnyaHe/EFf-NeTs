@@ -1,88 +1,98 @@
 import pandas as pd
 
-from indicators import usage_related, capacity_related, fairness, expansion_der,\
-    electricity_related
-from weights import addnames
+from indicators import get_reflection_of_usage_related_costs, get_reflection_of_capacity_related_costs, get_fairness, get_expansion_der,\
+    get_efficient_electricity_usage
+from weights import add_names_criteria
 
 
-def r_matrix(dt, sf, af):
-    r = result_matrix(dt, sf, af)
-    r.columns = ['1 Volumetric Tariff', '2 Monthly Power Peak', '3 Yearly Power Peak',
-                 '4 Capacity Tariff']
-    r['Criteria'] = ['1 Reflection of Usage-Related Costs',
-                     '2 Reflection of Capacity-Related Costs',
-                     '3 Fairness and Customer Acceptance',
-                     '4 Expansion of DER',
-                     '5 Efficient Electricity Usage']
-    r['Scenario'] = [sf, sf, sf, sf, sf]
+def get_performance_indicators_scenario_with_names(dt, sf, af):
+    result_matrix = get_performance_indicators_scenario(dt, sf, af)
+    result_matrix.columns = \
+        ['1 Volumetric Tariff', '2 Monthly Power Peak', '3 Yearly Power Peak',
+         '4 Capacity Tariff']
+    result_matrix['Criteria'] = ['1 Reflection of Usage-Related Costs',
+                                 '2 Reflection of Capacity-Related Costs',
+                                 '3 Fairness and Customer Acceptance',
+                                 '4 Expansion of DER',
+                                 '5 Efficient Electricity Usage']
+    result_matrix['Scenario'] = [sf, sf, sf, sf, sf]
 
-    return r
+    return result_matrix
 
 
-def result_matrix(dt, sf, af):
+def get_performance_indicators_scenario(dt, idx_scenario, nr_alternatives):
     """
     Normalised results for indicators
 
     :param dt: pd.DataFrame
         input data
-    :param sf: int
+    :param idx_scenario: int
         scenario to be analysed
-    :param af: int
+    :param nr_alternatives: int
         total number of alternatives
     :return:
     """
-    UR = usage_related(dt, sf, af)
-    CR = capacity_related(dt, sf, af)
-    N = fairness(dt, sf, af)
-    FR = N.div(N.sum(axis=1), axis=0)
-    RR = expansion_der(dt, sf, af)
-    EF = electricity_related(dt, sf, af)
-    rf = pd.concat([UR, CR, FR, RR, EF], ignore_index=True)
-    return addnames(rf.T).T
+    reflected_usage_related_costs = \
+        get_reflection_of_usage_related_costs(dt, idx_scenario, nr_alternatives)
+    reflection_capacity_related_costs = \
+        get_reflection_of_capacity_related_costs(dt, idx_scenario, nr_alternatives)
+    fairness_and_customer_acceptance = get_fairness(dt, idx_scenario, nr_alternatives)
+    expansion_der = get_expansion_der(dt, idx_scenario, nr_alternatives)
+    efficient_electricity_usage = \
+        get_efficient_electricity_usage(dt, idx_scenario, nr_alternatives)
+    result_matrix = pd.concat([reflected_usage_related_costs,
+                               reflection_capacity_related_costs,
+                               fairness_and_customer_acceptance,
+                               expansion_der,
+                               efficient_electricity_usage], ignore_index=True)
+    return add_names_criteria(result_matrix.T).T
 
 
-def end_result(dt, sf, af, weights):
+def get_rating_scenario(dt, idx_scenario, nr_alternatives, weights):
     """
-    Combining indicator results with criteria's weights to generate ranking
+    Combining indicator results with criteria weights to generate ranking
 
     :param dt: pd.DataFrame
         input data
-    :param sf: int
+    :param idx_scenario: int
         scenario to be analysed
-    :param af: int
+    :param nr_alternatives: int
         total number of alternatives
     :param weights: pd.DataFrame
         dataframe with weighting of indicators
     :return:
     """
-    N = result_matrix(dt, sf, af)
+    performance_indicators = \
+        get_performance_indicators_scenario(dt, idx_scenario, nr_alternatives)
 
-    for j in range(1, len(N.columns) + 1):
-        N[j] = N[j] * weights.transpose().iloc[:, 0]
+    for alternative in range(1, len(performance_indicators.columns) + 1):
+        performance_indicators[alternative] = \
+            performance_indicators[alternative] * weights.transpose().iloc[:, 0]
 
-    R = N.sum()
+    overall_rating = performance_indicators.sum()
 
-    return R
+    return overall_rating
 
 
-def results(dt, af, weights):
+def get_results(dt, nr_alternatives, weights):
     """
     Aggregating results for all scenarios
 
     :param dt: pd.DataFrame
         input data
-    :param af: int
+    :param nr_alternatives: int
         total number of alternatives
     :param weights: pd.DataFrame
         dataframe with weighting of indicators
     :return:
     """
-    S1 = end_result(dt, 1, af, weights)
-    S2 = end_result(dt, 2, af, weights)
-    S3 = end_result(dt, 3, af, weights)
-    S4 = end_result(dt, 4, af, weights)
+    results_scenario_1 = get_rating_scenario(dt, 1, nr_alternatives, weights)
+    results_scenario_2 = get_rating_scenario(dt, 2, nr_alternatives, weights)
+    results_scenario_3 = get_rating_scenario(dt, 3, nr_alternatives, weights)
+    results_scenario_4 = get_rating_scenario(dt, 4, nr_alternatives, weights)
 
-    S = pd.concat([S1, S2, S3, S4], axis=1)
-    S.columns = ['Scenario 1', 'Scenario 2', 'Scenario 3', 'Scenario 4']
+    results_final = pd.concat([results_scenario_1, results_scenario_2,
+                               results_scenario_3, results_scenario_4], axis=1)
+    results_final.columns = ['Scenario 1', 'Scenario 2', 'Scenario 3', 'Scenario 4']
 
-    return S
+    return results_final
