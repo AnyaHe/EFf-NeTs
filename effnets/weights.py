@@ -80,17 +80,18 @@ def extract_weights(pairwise_comparison_main, pairwise_comparison_efficient_grid
         4: efficient electricity usage
     """
     # initialise weights
-    weights = np.ones([1, 5])
+    weights = np.ones([1, 6])
     # extract priorities for main- and sub-criteria
     priorities_main = priorities(pairwise_comparison_main)
     priorities_eff_grid = priorities(pairwise_comparison_efficient_grid)
     priorities_pol_objectives = priorities(pairwise_comparison_political_objectives)
     # combine weights of main and sub-criteria
-    weights[0, 0] = priorities_eff_grid[0] * priorities_main[0]
-    weights[0, 1] = priorities_eff_grid[1] * priorities_main[0]
-    weights[0, 2] = priorities_main[1]
-    weights[0, 3] = priorities_pol_objectives[0] * priorities_main[2]
-    weights[0, 4] = priorities_pol_objectives[1] * priorities_main[2]
+    weights[0, 0] = 0.5 * priorities_main[0]
+    weights[0, 1] = 0.5 * priorities_eff_grid[0] * priorities_main[0]
+    weights[0, 2] = 0.5 * priorities_eff_grid[1] * priorities_main[0]
+    weights[0, 3] = priorities_main[1]
+    weights[0, 4] = priorities_pol_objectives[0] * priorities_main[2]
+    weights[0, 5] = priorities_pol_objectives[1] * priorities_main[2]
     weights = pd.DataFrame(weights)
     return weights
 
@@ -103,9 +104,11 @@ def add_names_criteria(df):
         Containing data on evaluated criteria, columns have to correspond to criteria
     :return:
     """
-    df.columns = ['Reflection of Usage-Related Costs',
+    df.columns = ['Reflection of Costs',
+                  'Reflection of Usage-Related Costs',
                   'Reflection of Capacity-Related Costs',
                   'Fairness and Customer Acceptance',
-                  'Expansion of DER', 'Efficient Electricity Usage']
+                  'Expansion of DER',
+                  'Efficient Electricity Usage']
     return df
 
