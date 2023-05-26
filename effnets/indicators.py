@@ -28,7 +28,7 @@ def get_peak_total(dt, idx_scenario, nr_alternatives):
         tmp = dt[(dt['Scenario'] == idx_scenario) & (dt['Alternative'] == alternative)]
         simultaneous_peaks.loc[0, alternative] = tmp[res_col].sum()
     # calculate peak reduction, Eq. (3)
-    peak_reduction = 1 - simultaneous_peaks.divide(reference_peak)
+    peak_reduction = 1.5 - simultaneous_peaks.divide(reference_peak)
     return peak_reduction
 
 
@@ -72,7 +72,7 @@ def get_capacity_total(dt, idx_scenario, nr_alternatives):
         tmp = dt[(dt['Scenario'] == idx_scenario) & (dt['Alternative'] == alternative)]
         contracted_capacity.loc[0, alternative] = tmp['Contracted Capacity'].sum()
     # calculate peak reduction, Eq. (4)
-    capacity_reduction = 1 - contracted_capacity.divide(reference_capacity)
+    capacity_reduction = 1.5 - contracted_capacity.divide(reference_capacity)
     return capacity_reduction
 
 
@@ -185,7 +185,7 @@ def get_fairness(dt, idx_scenario, nr_alternatives):
     # Calculating Fairness and Customer Acceptance Ratio
     dt_inflex = dt[(dt['Customer Group'] == 1)].copy()
     dt_inflex['Fairness'] = \
-        1 - dt_inflex['Relative Cost Share'] / cost_share_inflex_base
+        1.5 - dt_inflex['Relative Cost Share'] / cost_share_inflex_base
 
     fairness = pd.DataFrame()
 
@@ -228,7 +228,7 @@ def get_cost_change_pv(dt, idx_scenario, nr_alternatives):
     for alternative in range(1, nr_alternatives + 1):
         tmp = dt_pv_owners[(dt_pv_owners['Scenario'] == idx_scenario) &
                            (dt_pv_owners['Alternative'] == alternative)]
-        pv_cost_ratio.loc[0, alternative] = 1 - tmp['PV Cost Ratio'].values[0]
+        pv_cost_ratio.loc[0, alternative] = 1.5 - tmp['PV Cost Ratio'].values[0]
     return pv_cost_ratio
 
 
@@ -248,7 +248,7 @@ def get_pv_rentability(dt, idx_scenario, nr_alternatives):
     dt_pv_cost_change = [[1.162, 1.0133, 1.0053, 1]] # Determined based on example consumer profiles Todo: move to input data?
     pv_cost_change = pd.DataFrame(dt_pv_cost_change, columns=[1, 2, 3, 4])
     # normalise PV rentability, Eq. (25) - Todo: necessary?
-    pv_rentability = 1 - pv_cost_change.rdiv(1)
+    pv_rentability = 1.5 - pv_cost_change.rdiv(1)
     return pv_rentability
 
 
@@ -319,7 +319,7 @@ def get_reduction_of_purchased_electricity(dt, idx_scenario, nr_alternatives):
     for alternative in range(1, nr_alternatives + 1):
         tmp = dt[(dt['Scenario'] == idx_scenario) & (dt['Alternative'] == alternative)]
         purchased_electricity.loc[0, alternative] = \
-            1 - tmp['Electricity Purchased'].sum() / purchased_electricity_base
+            1.5 - tmp['Electricity Purchased'].sum() / purchased_electricity_base
     return purchased_electricity
 
 
