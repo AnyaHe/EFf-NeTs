@@ -3,7 +3,7 @@ import numpy as np
 
 from data.expert_weighting import expert_pairwise_comparison_dict
 from weights import get_relative_weights_stakeholder, add_names_criteria
-from indicators import get_pv_cost_ratio, get_fairness
+from indicators import get_cost_change_pv, get_fairness
 from results import get_results, get_performance_indicators_scenario_with_names
 
 
@@ -25,7 +25,7 @@ dt = pd.DataFrame(
 
 # Generating ranking of alternative for every expert
 equal_weights = add_names_criteria(pd.DataFrame({
-    0: {0: 1/6, 1: 1/6, 2: 1/3, 3: 1/6, 4: 1/6}
+    0: {0: 1/6, 1: 1/12, 2: 1/12, 3: 1/3, 4: 1/6, 5: 1/6}
 }).T)
 results_EW = get_results(dt, nr_alternatives, equal_weights)
 results_dict = {
@@ -61,10 +61,10 @@ fairness['Scenario'] = [1, 2, 3, 4]
 fairness.set_index('Scenario', inplace = True)
 fairness.to_excel(r'results/fairness.xlsx')
 
-pv_rentability = pd.concat([get_pv_cost_ratio(dt, 1, nr_alternatives),
-                            get_pv_cost_ratio(dt, 2, nr_alternatives),
-                            get_pv_cost_ratio(dt, 3, nr_alternatives),
-                            get_pv_cost_ratio(dt, 4, nr_alternatives)])
+pv_rentability = pd.concat([get_cost_change_pv(dt, 1, nr_alternatives),
+                            get_cost_change_pv(dt, 2, nr_alternatives),
+                            get_cost_change_pv(dt, 3, nr_alternatives),
+                            get_cost_change_pv(dt, 4, nr_alternatives)])
 pv_rentability['Scenario'] = [1, 2, 3, 4]
 pv_rentability.set_index('Scenario', inplace = True)
 pv_rentability.to_excel(r'results/pvrentability.xlsx')
