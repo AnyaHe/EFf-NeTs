@@ -1,8 +1,7 @@
 import pandas as pd
 
-from indicators import get_reflection_of_costs, get_reflection_of_usage_related_costs, \
-    get_reflection_of_capacity_related_costs, get_fairness, get_expansion_der,\
-    get_efficient_electricity_usage
+from indicators import get_fairness, get_expansion_der,\
+    get_efficient_electricity_usage, get_efficient_grid
 from weights import add_names_criteria
 
 
@@ -11,9 +10,7 @@ def get_performance_indicators_scenario_with_names(dt, sf, af):
     result_matrix.columns = \
         ['Volumetric Tariff', 'Monthly Power Peak', 'Yearly Power Peak',
          'Capacity Tariff']
-    result_matrix['Criteria'] = ['Reflection of Costs',
-                                 'Reflection of Usage-Related Costs',
-                                 'Reflection of Capacity-Related Costs',
+    result_matrix['Criteria'] = ['Efficient Grid',
                                  'Fairness and Customer Acceptance',
                                  'Expansion of DER',
                                  'Efficient Electricity Usage'] # Todo: connect with add_names_criteria
@@ -34,18 +31,12 @@ def get_performance_indicators_scenario(dt, idx_scenario, nr_alternatives):
         total number of alternatives
     :return:
     """
-    reflection_of_costs = get_reflection_of_costs(dt, idx_scenario, nr_alternatives)
-    reflected_usage_related_costs = \
-        get_reflection_of_usage_related_costs(dt, idx_scenario, nr_alternatives)
-    reflection_capacity_related_costs = \
-        get_reflection_of_capacity_related_costs(dt, idx_scenario, nr_alternatives)
+    efficient_grid = get_efficient_grid(dt, idx_scenario, nr_alternatives)
     fairness_and_customer_acceptance = get_fairness(dt, idx_scenario, nr_alternatives)
     expansion_der = get_expansion_der(dt, idx_scenario, nr_alternatives)
     efficient_electricity_usage = \
         get_efficient_electricity_usage(dt, idx_scenario, nr_alternatives)
-    result_matrix = pd.concat([reflection_of_costs,
-                               reflected_usage_related_costs,
-                               reflection_capacity_related_costs,
+    result_matrix = pd.concat([efficient_grid,
                                fairness_and_customer_acceptance,
                                expansion_der,
                                efficient_electricity_usage], ignore_index=True)

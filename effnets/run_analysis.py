@@ -15,17 +15,26 @@ nr_alternatives = 4
 nr_criteria = 5
 
 # Import input data from simulated network
-data = pd.read_excel(r'data/inputdata.xlsx',
-                     sheet_name='Input')
-dt = pd.DataFrame(
-    data, columns=['Scenario', 'Alternative', 'Customer Group', 'Group Share',
-                   'Cost Share', 'Peak Share', 'Capacity Share', 'Energy Share',
-                   'Electricity Purchased', 'Simultaneous Peak', 'Contracted Capacity',
-                   'Local Peak'])
+data = pd.read_excel(r'data/inputdata_new.xlsx',
+                     sheet_name='Simulation_Analysis_Results')
+rename_dict = {
+    "Customer_Group": "Customer Group",
+    "Group_Share": "Group Share",
+    "Cost_share": "Cost Share",
+    "Peak_share": "Peak Share",
+    "Energy_share": "Energy Share",
+    "Capacity_share": "Capacity Share",
+    "Energiesumme": "Electricity Purchased",
+    "AggregierteP": "Aggregated Peak",
+    "AggregiertePglz": "Simultaneous Peak",
+    "AggregierteCap": "Contracted Capacity",
+    "Total_Losses": "Losses Share"
+}
+dt = data.rename(columns=rename_dict)
 
 # Generating ranking of alternative for every expert
 equal_weights = add_names_criteria(pd.DataFrame({
-    0: {0: 1/6, 1: 1/12, 2: 1/12, 3: 1/3, 4: 1/6, 5: 1/6}
+    0: {0: 1/3, 1: 1/3, 2: 1/6, 3: 1/6}
 }).T)
 results_EW = get_results(dt, nr_alternatives, equal_weights)
 results_dict = {
