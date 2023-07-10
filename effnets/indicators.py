@@ -106,11 +106,8 @@ def get_reflection_of_costs(dt, idx_scenario, nr_alternatives):
         total number of alternatives
     :return:
     """
-    # calculate division into usage- and capacity-related costs
-    cost_contribution_ur = pd.read_csv("data/cost_contribution_ur.csv", index_col=0,
-                                       dtype={0: int})
-    cost_contribution_ur.columns = cost_contribution_ur.columns.astype(int)
-    cost_contribution_cr = 1 - cost_contribution_ur
+    cost_contribution_cr, cost_contribution_ur = \
+        get_share_usage_and_capacity_related_costs()
     # calculate share on aggregated peak
     correlation = pd.DataFrame()
     slope = pd.DataFrame()
@@ -134,7 +131,16 @@ def get_reflection_of_costs(dt, idx_scenario, nr_alternatives):
     return correlation.multiply(slope)
 
 
-def get_efficient_grid(dt, idx_scenario, nr_alternatives, weight_ur=0.5, weight_cr=0.5):
+def get_share_usage_and_capacity_related_costs():
+    # calculate division into usage- and capacity-related costs
+    cost_contribution_ur = pd.read_csv("data/cost_contribution_ur.csv", index_col=0,
+                                       dtype={0: int})
+    cost_contribution_ur.columns = cost_contribution_ur.columns.astype(int)
+    cost_contribution_cr = 1 - cost_contribution_ur
+    return cost_contribution_cr, cost_contribution_ur
+
+
+def get_efficient_grid(dt, idx_scenario, nr_alternatives):
     """
     Get indicator for efficient grid
 
@@ -144,12 +150,12 @@ def get_efficient_grid(dt, idx_scenario, nr_alternatives, weight_ur=0.5, weight_
         scenario to be analysed
     :param nr_alternatives: int
         total number of alternatives
-    :param weight_ur: float
-        relative weight for reflection of usage-related costs, weight_ur+weight_cr=1
-    :param weight_cr: float
-        relative weight for reflection of capacity-related, weight_ur+weight_cr=1
     :return:
     """
+    cost_contribution_cr, cost_contribution_ur = \
+        get_share_usage_and_capacity_related_costs()
+    weight_ur = cost_contribution_ur.loc[idx_scenario]
+    weight_cr = cost_contribution_cr.loc[idx_scenario]
     reflection_of_costs = get_reflection_of_costs(dt, idx_scenario, nr_alternatives)
     reduction_of_usage_related_costs = \
         get_reflection_of_usage_related_costs(dt, idx_scenario, nr_alternatives)
