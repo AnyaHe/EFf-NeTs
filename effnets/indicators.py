@@ -5,9 +5,15 @@ import numpy as np
 # Implementation of the indicators with functions
 
 
-def get_peak_total(dt, idx_scenario, nr_alternatives):
+def get_relative_reduction(dt, idx_scenario, nr_alternatives, parameter):
     """
-    Calculating Simultaneous Peak for an Alternative and Scenario
+    Calculating reduction indicator of absolute value of <parameter> (e.g. 'Simultaneous
+    Peak'). The indicator is thereby calculated relative to the reference alternative
+    (1), here the volumetric tariff. If the parameter value is the same as for the
+    volumetric tariff, the indicator will have a value of 0.5, if the parameter is
+    reduced by 50%, the indicator will be 1.0, if it is increased by 50%, it will be 0.
+    Negative values indicate an increase >50%, positive values can reach up to 1.5, if
+    the parameter value is reduced to 0.
 
     :param dt: pd.DataFrame
         input data
@@ -15,24 +21,24 @@ def get_peak_total(dt, idx_scenario, nr_alternatives):
         scenario to be analysed
     :param nr_alternatives: int
         total number of alternatives
+    :param parameter: str
+        total number of alternatives
     :return:
     """
-    # choose relevant column in input data
-    res_col = 'Simultaneous Peak'
     # get reference peak for volumetric tariff
-    reference_peak = dt[(dt['Scenario'] == idx_scenario) &
-                        (dt['Alternative'] == 1)][res_col].sum()
+    reference = dt[(dt['Scenario'] == idx_scenario) &
+                   (dt['Alternative'] == 1)][parameter].sum()
     # calculate simultaneous power peaks
-    simultaneous_peaks = pd.DataFrame()
+    parameter_values = pd.DataFrame()
     for alternative in range(1, nr_alternatives + 1):
         tmp = dt[(dt['Scenario'] == idx_scenario) & (dt['Alternative'] == alternative)]
-        simultaneous_peaks.loc[0, alternative] = tmp[res_col].sum()
-    # calculate peak reduction, Eq. (3)
-    peak_reduction = 1.5 - simultaneous_peaks.divide(reference_peak)
-    return peak_reduction
+        parameter_values.loc[0, alternative] = tmp[parameter].sum()
+    # calculate relative reduction, e.g. Eq. (3)
+    reduction_indicator = 1.5 - parameter_values.divide(reference)
+    return reduction_indicator
 
 
-def get_reflection_of_usage_related_costs(dt, idx_scenario, nr_alternatives):
+def get_reduction_of_usage_related_costs(dt, idx_scenario, nr_alternatives):
     """
     Calculating Usage (Peak) Related Distribution Factor for All Alternatives in given
     Scenario
@@ -47,36 +53,11 @@ def get_reflection_of_usage_related_costs(dt, idx_scenario, nr_alternatives):
     """
     # rated reflection of usage related costs, Eq. (9)
     reflection_usage_related = \
-        get_peak_total(dt, idx_scenario, nr_alternatives)
+        get_relative_reduction(dt, idx_scenario, nr_alternatives, 'Simultaneous Peak')
     return reflection_usage_related
 
 
-def get_capacity_total(dt, idx_scenario, nr_alternatives):
-    """
-    Calculating the total Contracted Capacity for an Alternative and Scenario
-
-    :param dt: pd.DataFrame
-        input data
-    :param idx_scenario: int
-        scenario to be analysed
-    :param nr_alternatives: int
-        total number of alternatives
-    :return:
-    """
-    # get reference contracted capacity for volumetric tariff
-    reference_capacity = dt[(dt['Scenario'] == idx_scenario) &
-                        (dt['Alternative'] == 1)]['Contracted Capacity'].sum()
-    # calculate contracted capacity
-    contracted_capacity = pd.DataFrame()
-    for alternative in range(1, nr_alternatives + 1):
-        tmp = dt[(dt['Scenario'] == idx_scenario) & (dt['Alternative'] == alternative)]
-        contracted_capacity.loc[0, alternative] = tmp['Contracted Capacity'].sum()
-    # calculate peak reduction, Eq. (4)
-    capacity_reduction = 1.5 - contracted_capacity.divide(reference_capacity)
-    return capacity_reduction
-
-
-def get_reflection_of_capacity_related_costs(dt, idx_scenario, nr_alternatives):
+def get_reduction_of_capacity_related_costs(dt, idx_scenario, nr_alternatives):
     """
     Calculating Capacity Related Distribution Factor for All Alternatives
 
@@ -90,7 +71,7 @@ def get_reflection_of_capacity_related_costs(dt, idx_scenario, nr_alternatives):
     """
     # reflection of capacity related costs, Eq. (16)
     reflection_capacity_related = \
-        get_capacity_total(dt, idx_scenario, nr_alternatives)
+        get_relative_reduction(dt, idx_scenario, nr_alternatives, "Contracted Capacity")
     return reflection_capacity_related
 
 
@@ -158,9 +139,9 @@ def get_efficient_grid(dt, idx_scenario, nr_alternatives):
     weight_cr = cost_contribution_cr.loc[idx_scenario]
     reflection_of_costs = get_reflection_of_costs(dt, idx_scenario, nr_alternatives)
     reduction_of_usage_related_costs = \
-        get_reflection_of_usage_related_costs(dt, idx_scenario, nr_alternatives)
+        get_reduction_of_usage_related_costs(dt, idx_scenario, nr_alternatives)
     reduction_of_capacity_related_costs = \
-        get_reflection_of_capacity_related_costs(dt, idx_scenario, nr_alternatives)
+        get_reduction_of_capacity_related_costs(dt, idx_scenario, nr_alternatives)
     efficient_grid = \
         0.5 * (reflection_of_costs + weight_ur * reduction_of_usage_related_costs +
                weight_cr * reduction_of_capacity_related_costs)
