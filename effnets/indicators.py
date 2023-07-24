@@ -108,7 +108,7 @@ def get_reflection_of_costs(dt, idx_scenario, nr_alternatives):
             np.corrcoef(cost_share, peak_share_scaled + capacity_share_scaled)[0, 1]
         # extract slope, Eq. () Todo: is a slope > 1 bad? Punishment too high then
         beta_1 = np.polyfit(cost_share, peak_share_scaled + capacity_share_scaled, 1)[0]
-        slope.loc[0, alternative] = 1 - abs(1-beta_1)
+        slope.loc[0, alternative] = min([abs(beta_1), abs(1/beta_1)])
     return correlation.multiply(slope)
 
 
@@ -282,7 +282,7 @@ def get_reflection_of_electricity(dt, idx_scenario, nr_alternatives):
             np.corrcoef(cost_share, energy_share)[0, 1]
         # extract slope, Eq. () Todo: is a slope > 1 bad? Punishment too high then
         beta_3 = np.polyfit(cost_share, energy_share, 1)[0]
-        slope.loc[0, alternative] = 1 - abs(1 - beta_3)
+        slope.loc[0, alternative] = min([abs(beta_3), abs(1/beta_3)])
     return correlation.multiply(slope)
 
 
