@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 
 from data.expert_weighting import expert_pairwise_comparison_dict
+from data.data_preparation import import_data
 from weights import get_relative_weights_stakeholder, add_names_criteria
 from indicators import get_cost_change_pv, get_fairness
 from results import get_results, get_performance_indicators_scenario_with_names
@@ -15,22 +16,7 @@ nr_alternatives = 4
 nr_criteria = 5
 
 # Import input data from simulated network
-data = pd.read_excel(r'data/inputdata_new.xlsx',
-                     sheet_name='Simulation_Analysis_Results')
-rename_dict = {
-    "Customer_Group": "Customer Group",
-    "Group_Share": "Group Share",
-    "Cost_share": "Cost Share",
-    "Peak_share": "Peak Share",
-    "Energy_share": "Energy Share",
-    "Capacity_share": "Capacity Share",
-    "Energiesumme": "Electricity Purchased",
-    "AggregierteP": "Aggregated Peak",
-    "AggregiertePglz": "Simultaneous Peak",
-    "AggregierteCap": "Contracted Capacity",
-    "Total_Losses": "Losses Share"
-}
-dt = data.rename(columns=rename_dict)
+dt = import_data()
 
 # Generating ranking of alternative for every expert
 equal_weights = add_names_criteria(pd.DataFrame({

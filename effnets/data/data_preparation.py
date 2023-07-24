@@ -2,6 +2,38 @@
 import pandas as pd
 import os
 from itertools import product
+import pathlib
+
+
+def import_data():
+    """
+    Method to read input data and rename columns to expected names.
+
+    :return: pandas.DataFrame
+        columns contain ["Customer Group", "Group Share", "Cost Share", "Peak Share",
+        "Energy Share", "Capacity Share", "Electricity Purchased", "Aggregated Peak",
+        "Simultaneous Peak", "Contracted Capacity", "Losses", "Losses Share"]
+    """
+    # Import input data from simulated network
+    data_dir = pathlib.Path(__file__).parent.resolve()
+    data = pd.read_excel(os.path.join(data_dir, 'inputdata_new.xlsx'),
+                         sheet_name='Simulation_Analysis_Results')
+    rename_dict = {
+        "Customer_Group": "Customer Group",
+        "Group_Share": "Group Share",
+        "Cost_share": "Cost Share",
+        "Peak_share": "Peak Share",
+        "Energy_share": "Energy Share",
+        "Capacity_share": "Capacity Share",
+        "Energiesumme": "Electricity Purchased",
+        "AggregierteP": "Aggregated Peak",
+        "AggregiertePglz": "Aggregated Simultaneous Peak",
+        "Peak_share_mean_total": "Simultaneous Peak",
+        "AggregierteCap": "Contracted Capacity",
+        "Total_Losses": "Losses",
+        "relative_Losses": "Losses Share"
+    }
+    return data.rename(columns=rename_dict)
 
 
 def determine_usage_and_capacity_related_cost_contributions():
@@ -15,18 +47,14 @@ def determine_usage_and_capacity_related_cost_contributions():
     # calculate division into usage- and capacity-related costs
     ur_base = 0.41  # from Chanel and Limoges
     cr_base = 0.59  # from Chanel and Limoges
+    # determine parameter for usage and capacity related costs
+    param_ur = 'Simultaneous Peak'
+    param_cr = 'Contracted Capacity'
     # get data of base scenario
-    data = pd.read_excel(r'inputdata.xlsx',
-                         sheet_name='Input')
-    dt = pd.DataFrame(
-        data, columns=['Scenario', 'Alternative', 'Customer Group', 'Group Share',
-                       'Cost Share', 'Peak Share', 'Capacity Share', 'Energy Share',
-                       'Electricity Purchased', 'Simultaneous Peak',
-                       'Contracted Capacity',
-                       'Local Peak'])
+    dt = import_data()
     base_dt = dt[(dt['Scenario'] == 1) & (dt['Alternative'] == 1)]
-    peak_base = base_dt['Simultaneous Peak'].sum()
-    capacity_base = base_dt['Contracted Capacity'].sum()
+    peak_base = base_dt[param_ur].sum()
+    capacity_base = base_dt[param_cr].sum()
     # get cost contribution of peaks and capacity
     cost_contribution_ur = pd.DataFrame()
     cost_contribution_cr = pd.DataFrame()
@@ -34,12 +62,12 @@ def determine_usage_and_capacity_related_cost_contributions():
         for alternative in dt["Alternative"].unique():
             # adapt to new alternative and scenario, Eq. (33)
             peak = dt[(dt['Scenario'] == scenario) &
-                      (dt['Alternative'] == alternative)]['Simultaneous Peak'].sum()
+                      (dt['Alternative'] == alternative)][param_ur].sum()
             ur_tmp = ur_base * peak / peak_base
             # adapt to new alternative and scenario, Eq. (34)
             capacity = \
                 dt[(dt['Scenario'] == scenario) &
-                   (dt['Alternative'] == alternative)]['Contracted Capacity'].sum()
+                   (dt['Alternative'] == alternative)][param_cr].sum()
             cr_tmp = cr_base * capacity / capacity_base
             # normalise so sum is 1, Eq. (35)
             cost_contribution_ur.loc[scenario, alternative] = ur_tmp/(ur_tmp+cr_tmp)
@@ -83,7 +111,8 @@ def get_profiles_of_different_consumer_groups(profiles_hh, profiles_pv,
     # Determine profiles HH with PV, and BESS
     profiles_hh_pv = _get_combined_profiles(profiles_hh, -profiles_pv)
     if profiles_bess is not None:
-        profiles_hh_pv_bess = _get_combined_profiles(profiles_hh_pv, profiles_bess)
+        profiles_hh_pv_bess = _get_combined_profiles(
+            profiles_hh, -profiles_pv+profiles_bess.values)
     else:
         profiles_hh_pv_bess = profiles_hh_pv
     profiles_hh_pv[profiles_hh_pv < 0] = 0
@@ -97,7 +126,7 @@ def get_profiles_of_different_consumer_groups(profiles_hh, profiles_pv,
     profiles_hh_ev_pv = _get_combined_profiles(profiles_hh_ev, -profiles_pv)
     if profiles_bess is not None:
         profiles_hh_ev_pv_bess = \
-            _get_combined_profiles(profiles_hh_ev_pv, profiles_bess)
+            _get_combined_profiles(profiles_hh_ev, -profiles_pv+profiles_bess.values)
     else:
         profiles_hh_ev_pv_bess = profiles_hh_ev_pv
     profiles_hh_ev_pv[profiles_hh_ev_pv < 0] = 0
@@ -143,8 +172,9 @@ def determine_cost_reduction_by_purchase_of_pv(
                 :return: float
                     Value for contracted capacity
                 """
-                capacity_tiers = [5, 10, 15, 20, 25]
-                capacity_tiers.reverse()# Todo: change to actually used values
+                capacity_tiers = [3, 5, 7, 6*1.44, 10*1.44, 13*1.44, 16*1.44, 20*1.44,
+                                  25*1.44, 32*1.44, 35*1.44, 40*1.44, 50*1.44, 63*1.44]
+                capacity_tiers.reverse()
                 contracted_capacity = 0
                 for tier in capacity_tiers:
                     if peak <= tier:
