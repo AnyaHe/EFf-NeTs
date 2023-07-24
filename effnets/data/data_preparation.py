@@ -75,8 +75,9 @@ def determine_usage_and_capacity_related_cost_contributions():
     return cost_contribution_ur, cost_contribution_cr
 
 
-def get_profiles_of_different_consumer_groups(profiles_hh, profiles_pv,
-                                              profiles_ev=None, profiles_bess=None):
+def get_profiles_of_different_consumer_groups(
+        profiles_hh_cg4, profiles_pv_cg4, profiles_hh_cg5, profiles_pv_cg5,
+        profiles_bess_cg4=None, profiles_ev_cg5=None, profiles_bess_cg5=None):
     """
     Method to generate combined profiles with representative time series of households
     (hh), PV, BESS and EVs.
@@ -99,65 +100,58 @@ def get_profiles_of_different_consumer_groups(profiles_hh, profiles_pv,
             columns determine different profiles
         :return: pd.DataFrame()
         """
-        combined_profiles = pd.concat(
-            [profiles_1] * len(profiles_2.columns), axis=1)[profiles_1.columns] + \
-            pd.concat([profiles_2] * len(profiles_1.columns), axis=1).values
-        col_names = ["-".join(prod) for prod in list(product(profiles_1.columns,
-                                                             profiles_2.columns))]
-        combined_profiles.columns = col_names
+        combined_profiles = profiles_1 + profiles_2.values
         return combined_profiles
 
     # Todo: might not be necessary, if you just enter the profiles
-    # Determine profiles HH with PV, and BESS
-    profiles_hh_pv = _get_combined_profiles(profiles_hh, -profiles_pv)
-    if profiles_bess is not None:
-        profiles_hh_pv_bess = _get_combined_profiles(
-            profiles_hh, -profiles_pv+profiles_bess.values)
+    # Determine profiles HH with PV, and BESS for CG4
+    profiles_hh_pv_cg4 = _get_combined_profiles(profiles_hh_cg4, -profiles_pv_cg4)
+    if profiles_bess_cg4 is not None:
+        profiles_hh_pv_bess_cg4 = _get_combined_profiles(
+            profiles_hh_cg4, -profiles_pv_cg4+profiles_bess_cg4.values)
     else:
-        profiles_hh_pv_bess = profiles_hh_pv
-    profiles_hh_pv[profiles_hh_pv < 0] = 0
-    profiles_hh_pv_bess[profiles_hh_pv_bess < 0] = 0
+        profiles_hh_pv_bess_cg4 = profiles_hh_pv_cg4
+    profiles_hh_pv_cg4[profiles_hh_pv_cg4 < 0] = 0
+    profiles_hh_pv_bess_cg4[profiles_hh_pv_bess_cg4 < 0] = 0
     # Determine profiles with EV and EV in combination with PV, and BESS
     # Todo: bess should be added as well
-    if profiles_ev is not None:
-        profiles_hh_ev = _get_combined_profiles(profiles_hh, profiles_ev)
+    if profiles_ev_cg5 is not None:
+        profiles_hh_ev_cg5 = _get_combined_profiles(profiles_hh_cg5, profiles_ev_cg5)
     else:
-        profiles_hh_ev = profiles_hh
-    profiles_hh_ev_pv = _get_combined_profiles(profiles_hh_ev, -profiles_pv)
-    if profiles_bess is not None:
-        profiles_hh_ev_pv_bess = \
-            _get_combined_profiles(profiles_hh_ev, -profiles_pv+profiles_bess.values)
+        profiles_hh_ev_cg5 = profiles_hh_cg5
+    profiles_hh_ev_pv_cg5 = _get_combined_profiles(profiles_hh_ev_cg5, -profiles_pv_cg5)
+    if profiles_bess_cg5 is not None:
+        profiles_hh_ev_pv_bess_cg5 = \
+            _get_combined_profiles(profiles_hh_ev_cg5,
+                                   -profiles_pv_cg5+profiles_bess_cg5.values)
     else:
-        profiles_hh_ev_pv_bess = profiles_hh_ev_pv
-    profiles_hh_ev_pv[profiles_hh_ev_pv < 0] = 0
-    profiles_hh_ev_pv_bess[profiles_hh_ev_pv_bess < 0] = 0
-    return profiles_hh_pv, profiles_hh_pv_bess, profiles_hh_ev, profiles_hh_ev_pv, \
-        profiles_hh_ev_pv_bess
+        profiles_hh_ev_pv_bess_cg5 = profiles_hh_ev_pv_cg5
+    profiles_hh_ev_pv_cg5[profiles_hh_ev_pv_cg5 < 0] = 0
+    profiles_hh_ev_pv_bess_cg5[profiles_hh_ev_pv_bess_cg5 < 0] = 0
+    return profiles_hh_pv_cg4, profiles_hh_pv_bess_cg4, \
+           profiles_hh_ev_cg5, profiles_hh_ev_pv_cg5, profiles_hh_ev_pv_bess_cg5
 
 
 def determine_cost_reduction_by_purchase_of_pv(
-        profiles_hh, profiles_hh_pv, profiles_hh_pv_bess, profiles_hh_ev,
-        profiles_hh_ev_pv, profiles_hh_ev_pv_bess):
+        profiles_hh_cg4, profiles_hh_pv_cg4, profiles_hh_pv_bess_cg4,
+        profiles_hh_ev_cg5, profiles_hh_ev_pv_cg5, profiles_hh_ev_pv_bess_cg5):
     """
     Determine possible cost reduction by purchase of PV system for different network
-    tariffs.
+    tariffs
 
-    :param profiles_hh:
-    :param profiles_hh_pv:
-    :param profiles_hh_pv_bess:
-    :param profiles_hh_ev:
-    :param profiles_hh_ev_pv:
-    :param profiles_hh_ev_pv_bess:
+    :param profiles_hh_cg4:
+    :param profiles_hh_pv_cg4:
+    :param profiles_hh_pv_bess_cg4:
+    :param profiles_hh_ev_cg5:
+    :param profiles_hh_ev_pv_cg5:
+    :param profiles_hh_ev_pv_bess_cg5:
     :return:
     """
     def _determine_reduction_potential(tariff_type):
         def _get_relative_reduction(profile_new, profile_base):
             ind_base = profile_base.apply(method)
             ind_new = profile_new.apply(method)
-            idx = ind_new.reset_index()["index"].str.split(
-                "-", expand=True)
-            idx = idx.loc[:, 0:len(idx.columns) - 2].agg('-'.join, axis=1)
-            return (ind_new / ind_base[idx].values).mean()
+            return (ind_new / ind_base.values).mean()
 
         def _get_monthly_peak(df):
             return df.groupby(df.index.month).max().sum()
@@ -196,26 +190,26 @@ def determine_cost_reduction_by_purchase_of_pv(
         consumer_group = "PV"
         reduction_potential.loc[consumer_group, tariff_type] = \
             _get_relative_reduction(
-                profile_new=profiles_hh_pv,
-                profile_base=profiles_hh
+                profile_new=profiles_hh_pv_cg4,
+                profile_base=profiles_hh_cg4
             )
         consumer_group = "PV_BESS"
         reduction_potential.loc[consumer_group, tariff_type] = \
             _get_relative_reduction(
-                profile_new=profiles_hh_pv_bess,
-                profile_base=profiles_hh
+                profile_new=profiles_hh_pv_bess_cg4,
+                profile_base=profiles_hh_cg4
             )
         consumer_group = "EV_PV"
         reduction_potential.loc[consumer_group, tariff_type] = \
             _get_relative_reduction(
-                profile_new=profiles_hh_ev_pv,
-                profile_base=profiles_hh_ev
+                profile_new=profiles_hh_ev_pv_cg5,
+                profile_base=profiles_hh_ev_cg5
             )
         consumer_group = "EV_PV_BESS"
         reduction_potential.loc[consumer_group, tariff_type] = \
             _get_relative_reduction(
-                profile_new=profiles_hh_ev_pv_bess,
-                profile_base=profiles_hh_ev
+                profile_new=profiles_hh_ev_pv_bess_cg5,
+                profile_base=profiles_hh_ev_cg5
             )
 
     # Set up dataframe
@@ -241,26 +235,52 @@ if __name__ == "__main__":
     # Cost reduction through purchase of PV system
     if calculate_pv_cost_reduction:
         data_dir = r"C:\Users\aheider\Downloads"
-        # Todo: If you have the real data, the following block is not necessary
-        hh_profiles = pd.read_excel(os.path.join(data_dir, "220530_PV_Calculations.xlsx"),
+        # Todo: use data of CG5 here
+        hh_profiles_cg5 = pd.read_excel(os.path.join(data_dir, "220530_PV_Calculations.xlsx"),
                                     sheet_name='grundverbrauch', index_col=0,
-                                    parse_dates=True)[["C1", "C2", "C3", "C4", "C5"]]
-        pv_profiles = pd.read_excel(os.path.join(data_dir, "220530_PV_Calculations.xlsx"),
+                                    parse_dates=True)[["C1", "C2", "C3", "C4"]]
+        pv_profiles_cg5 = pd.read_excel(os.path.join(data_dir, "220530_PV_Calculations.xlsx"),
                                     sheet_name='PV', index_col=0, parse_dates=True).loc[:,
                       ["PV_1", "PV_2", "PV_3", "PV_4"]].drop(index=["SUM", "MAX"])
-        pv_profiles.index = pd.to_datetime(pv_profiles.index)
-        ev_profiles = pd.read_excel(os.path.join(data_dir, "220530_PV_Calculations.xlsx"),
+        pv_profiles_cg5.index = pd.to_datetime(pv_profiles_cg5.index)
+        ev_profiles_cg5 = pd.read_excel(os.path.join(data_dir, "220530_PV_Calculations.xlsx"),
                                     sheet_name='emob', index_col=0, parse_dates=True).loc[:,
-                      ["E_Mob_PHEV_1", "E_Mob_BEV_1", "E_Mob_PHEV_2", "E_Mob_BEV_2",
-                       "E_Mob_PHEV_3"]].drop(index=["SUM", "MAX"])
-        ev_profiles.index = pd.to_datetime(ev_profiles.index)
-        hh_pv_profiles, hh_pv_bess_profiles, hh_ev_profiles, hh_ev_pv_profiles, \
-            hh_ev_pv_bess_profiles = get_profiles_of_different_consumer_groups(
-                hh_profiles, pv_profiles, profiles_ev=ev_profiles)
+                      ["E_Mob_PHEV_1", "E_Mob_BEV_1", "E_Mob_PHEV_2", "E_Mob_BEV_2"]].drop(index=["SUM", "MAX"])
+        ev_profiles_cg5.index = pd.to_datetime(ev_profiles_cg5.index)
+        bess_profiles_cg5 = pd.DataFrame(data=0, index=hh_profiles_cg5.index,
+                                         columns=["B_1", "B_2", "B_3", "B_4"])
+        # Todo: use data of CG4 here
+        hh_profiles_cg4 = \
+        pd.read_excel(os.path.join(data_dir, "220530_PV_Calculations.xlsx"),
+                      sheet_name='grundverbrauch', index_col=0,
+                      parse_dates=True)[["C1", "C2", "C3", "C4"]]
+        pv_profiles_cg4 = pd.read_excel(
+            os.path.join(data_dir, "220530_PV_Calculations.xlsx"),
+            sheet_name='PV', index_col=0, parse_dates=True).loc[:,
+                      ["PV_1", "PV_2", "PV_3", "PV_4"]].drop(index=["SUM", "MAX"])
+        pv_profiles_cg4.index = pd.to_datetime(pv_profiles_cg4.index)
+        bess_profiles_cg4 = pd.DataFrame(data=0, index=hh_profiles_cg4.index,
+                                         columns=["B_1", "B_2", "B_3", "B_4"])
+        # combine profiles
+        hh_pv_profiles_cg4, hh_pv_bess_profiles_cg4, \
+        hh_ev_profiles_cg5, hh_ev_pv_profiles_cg5, hh_ev_pv_bess_profiles_cg5 = \
+            get_profiles_of_different_consumer_groups(
+                profiles_hh_cg4=hh_profiles_cg4,
+                profiles_pv_cg4=pv_profiles_cg4,
+                profiles_hh_cg5=hh_profiles_cg5,
+                profiles_pv_cg5=pv_profiles_cg5,
+                profiles_bess_cg4=bess_profiles_cg4,
+                profiles_ev_cg5=ev_profiles_cg5,
+                profiles_bess_cg5=bess_profiles_cg5
+        )
         # Todo: start from here, if data is available
         reduction_potential_pv = determine_cost_reduction_by_purchase_of_pv(
-            hh_profiles, hh_pv_profiles, hh_pv_bess_profiles, hh_ev_profiles,
-            hh_ev_pv_profiles, hh_ev_pv_bess_profiles
+            profiles_hh_cg4=hh_profiles_cg4,
+            profiles_hh_pv_cg4=hh_pv_profiles_cg4,
+            profiles_hh_pv_bess_cg4=hh_pv_bess_profiles_cg4,
+            profiles_hh_ev_cg5=hh_ev_profiles_cg5,
+            profiles_hh_ev_pv_cg5=hh_ev_pv_profiles_cg5,
+            profiles_hh_ev_pv_bess_cg5=hh_ev_pv_bess_profiles_cg5
         )
         reduction_potential_pv.to_csv("pv_cost_reduction.csv")
     if calculate_cost_contribution:
