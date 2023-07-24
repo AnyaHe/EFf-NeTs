@@ -219,29 +219,9 @@ def get_cost_change_pv(dt, idx_scenario, nr_alternatives):
     return pv_cost_ratio
 
 
-def get_pv_rentability(dt, idx_scenario, nr_alternatives):
-    """
-    How much can inflexible consumers save by purchasing a PV System?
-
-    :param dt: pd.DataFrame
-        input data
-    :param idx_scenario: int
-        scenario to be analysed
-    :param nr_alternatives: int
-        total number of alternatives
-    :return:
-    """
-    # get PV rentability, Eq. (21)-(24)
-    dt_pv_cost_change = [[1.162, 1.0133, 1.0053, 1]] # Determined based on example consumer profiles Todo: move to input data?
-    pv_cost_change = pd.DataFrame(dt_pv_cost_change, columns=[1, 2, 3, 4])
-    # normalise PV rentability, Eq. (25) - Todo: necessary?
-    pv_rentability = 1.5 - pv_cost_change.rdiv(1)
-    return pv_rentability
-
-
 def get_expansion_der(dt, idx_scenario, nr_alternatives):
     """
-    Calculating indicator for criterion of expanding DER for All Alternatives
+    How much can consumers not owning a PV system yet save by purchasing one?
 
     :param dt: pd.DataFrame
         input data
@@ -251,11 +231,26 @@ def get_expansion_der(dt, idx_scenario, nr_alternatives):
         total number of alternatives
     :return:
     """
-    pv_cost_ratio = get_cost_change_pv(dt, idx_scenario, nr_alternatives)
-    pv_rentability = get_pv_rentability(dt, idx_scenario, nr_alternatives)
-    # combine and normalise indicators, Eq. (28)
-    expansion_der = (pv_cost_ratio + pv_rentability)/2
-    return expansion_der
+    # read data
+    dt_pv_cost_change = pd.read_csv("data/pv_cost_reduction.csv", index_col=0).rename(
+        columns={"VT": 1, "MPT": 2, "YPT": 3, "CT": 4}
+    )
+    # get customer shares of non-PV-owners
+    cg1_share = dt.loc[(dt.Scenario == idx_scenario)&(dt["Customer Group"] == 1),
+                       "Group Share"].unique()[0]
+    cg2_share = dt.loc[(dt.Scenario == idx_scenario) & (dt["Customer Group"] == 3),
+                       "Group Share"].unique()[0]
+    cu = cg1_share + cg2_share
+    # get PV rentability, Eq. (21)-(24)
+    pv_cost_change = cg1_share/cu * (0.5 * dt_pv_cost_change.loc["PV"] +
+                                     0.5 * dt_pv_cost_change.loc["PV_BESS"]) + \
+                     cg2_share/cu * (0.5 * dt_pv_cost_change.loc["EV_PV"] +
+                                     0.5 * dt_pv_cost_change.loc["EV_PV_BESS"])
+    df_pv_cost_change = pd.DataFrame(index=[1, 2, 3, 4])
+    df_pv_cost_change[0] = pv_cost_change
+    # normalise PV rentability, Eq. (25) - Todo: necessary?
+    pv_rentability = 1.5 - df_pv_cost_change.T
+    return pv_rentability
 
 
 def get_reflection_of_electricity(dt, idx_scenario, nr_alternatives):
