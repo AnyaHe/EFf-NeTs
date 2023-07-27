@@ -82,10 +82,13 @@ def get_profiles_of_different_consumer_groups(
     Method to generate combined profiles with representative time series of households
     (hh), PV, BESS and EVs.
 
-    :param profiles_hh:
-    :param profiles_pv:
-    :param profiles_ev:
-    :param profiles_bess:
+    :param profiles_hh_cg4:
+    :param profiles_pv_cg4:
+    :param profiles_hh_cg5:
+    :param profiles_pv_cg5:
+    :param profiles_bess_cg4:
+    :param profiles_ev_cg5:
+    :param profiles_bess_cg5:
     :return:
     """
     def _get_combined_profiles(profiles_1, profiles_2):
@@ -229,10 +232,57 @@ def determine_cost_reduction_by_purchase_of_pv(
     return reduction_potential
 
 
+def determine_proxy_of_cost_reduction_der():
+    """
+    Determine proxy for reduction potential, reduction of cost driving factors compared
+    to group shares, compared are PV-owners (CG2) and PV-BESS-owners (CG4) to inflexible
+    consumers (CG1) and PV-EV-BESS (CG5) to EV-owners (CG3).
+
+    :return:
+    """
+    # determine parameter for cost driving factors
+    tariff_dict = {
+        1: {"name": "VT", "proxy": "Electricity Purchased"},
+        2: {"name": "MPT", "proxy": "Aggregated Peak"},
+        3: {"name": "YPT", "proxy": "Aggregated Peak"},
+        4: {"name": "CT", "proxy": "Contracted Capacity"},
+    }
+    # get data of base scenario
+    dt = import_data()
+    # Set up dataframe
+    tariffs = ["VT", "MPT", "YPT", "CT"]
+    consumer_groups = ["PV", "PV_BESS", "EV_PV", "EV_PV_BESS"]
+    reduction_potential = pd.DataFrame(index=consumer_groups, columns=tariffs)
+    for t_index, t_inf in tariff_dict.items():
+        dt_tmp = dt.loc[(dt.Alternative == t_index) & (dt.Scenario.isin([1, 2, 3, 4]))]
+        dt_tmp["Relative Cost Driver"] = dt_tmp[t_inf["proxy"]]/dt_tmp["Group Share"]
+        reduction_pv = \
+            dt_tmp.loc[dt_tmp["Customer Group"] == 2, "Relative Cost Driver"].divide(
+                dt_tmp.loc[dt_tmp["Customer Group"] == 1, "Relative Cost Driver"].values
+            )
+        reduction_pv_bess =  \
+            dt_tmp.loc[dt_tmp["Customer Group"] == 4, "Relative Cost Driver"].divide(
+                dt_tmp.loc[dt_tmp["Customer Group"] == 1, "Relative Cost Driver"].values
+            )
+        reduction_ev_pv_bess = \
+            dt_tmp.loc[dt_tmp["Customer Group"] == 5, "Relative Cost Driver"].divide(
+                dt_tmp.loc[dt_tmp["Customer Group"] == 3, "Relative Cost Driver"].values
+            )
+        reduction_potential.loc["PV", t_inf["name"]] = reduction_pv.mean()
+        reduction_potential.loc["PV_BESS", t_inf["name"]] = reduction_pv_bess.mean()
+        reduction_potential.loc["EV_PV", t_inf["name"]] = reduction_ev_pv_bess.mean()
+        reduction_potential.loc["EV_PV_BESS", t_inf["name"]] = reduction_ev_pv_bess.mean()
+    return reduction_potential
+
+
 if __name__ == "__main__":
-    calculate_pv_cost_reduction = True
+    calculate_pv_cost_reduction_proxy = True
+    calculate_pv_cost_reduction = False
     calculate_cost_contribution = False
     # Cost reduction through purchase of PV system
+    if calculate_pv_cost_reduction_proxy:
+        reduction_potential_pv = determine_proxy_of_cost_reduction_der()
+        reduction_potential_pv.to_csv("pv_cost_reduction.csv")
     if calculate_pv_cost_reduction:
         data_dir = r"C:\Users\aheider\Downloads"
         # Todo: use data of CG5 here
