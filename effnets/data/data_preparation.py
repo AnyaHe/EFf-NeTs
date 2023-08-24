@@ -28,10 +28,11 @@ def import_data():
         "Energiesumme": "Electricity Purchased",
         "AggregierteP": "Aggregated Peak",
         "AggregiertePglz": "Aggregated Simultaneous Peak",
-        "Peak_share_mean_total": "Simultaneous Peak",
+        "Peak_share_abs": "Simultaneous Peak",
         "AggregierteCap": "Contracted Capacity",
         "Total_Losses": "Losses",
-        "relative_Losses": "Losses Share"
+        "relative_Losses": "Losses Share",
+        "agg_monthly_peak": "Monthly Peak"
     }
     return data.rename(columns=rename_dict)
 
