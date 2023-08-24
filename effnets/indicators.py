@@ -177,7 +177,8 @@ def get_fairness(dt, idx_scenario, nr_alternatives):
     fairness = pd.DataFrame()
 
     for alternative in range(1, nr_alternatives + 1):
-        tmp = dt_inflex[(dt_inflex['Scenario'] == idx_scenario) & (dt_inflex['Alternative'] == alternative)]
+        tmp = dt_inflex[(dt_inflex['Scenario'] == idx_scenario) &
+                        (dt_inflex['Alternative'] == alternative)]
         fairness.loc[0, alternative] = tmp['Fairness'].values[0]
     return fairness
 
