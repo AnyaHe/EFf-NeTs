@@ -18,7 +18,6 @@ def get_relative_weights_stakeholder(weighting_dict, stakeholder):
     """
     weights = add_names_criteria(extract_weights(
         weighting_dict["Main"],
-        weighting_dict["Efficient Grid"],
         weighting_dict["Political Objectives"]
     ))
     weights['Stakeholder'] = [stakeholder]
@@ -55,7 +54,7 @@ def priorities(pairwise_comparison_matrix):
     return rated_eig_vec
 
 
-def extract_weights(pairwise_comparison_main, pairwise_comparison_efficient_grid,
+def extract_weights(pairwise_comparison_main,
                     pairwise_comparison_political_objectives):
     """
     Method to extract relative weights from comparison matrices.
@@ -64,9 +63,6 @@ def extract_weights(pairwise_comparison_main, pairwise_comparison_efficient_grid
         Comparison matrix for main criteria:
         (i) efficient grid, (ii) fairness and customer acceptance,
         (iii) consistency with political objectives
-    :param pairwise_comparison_efficient_grid: np.array (2x2)
-        Comparison matrix for sub-criteria with respect to an efficient grid:
-        (i) reflection of usage-related costs, (ii) reflection of capacity-related costs
     :param pairwise_comparison_political_objectives: np.array (2x2)
         Comparison matrix for sub-criteria with respect to consistency with political
         objectives
@@ -80,17 +76,15 @@ def extract_weights(pairwise_comparison_main, pairwise_comparison_efficient_grid
         4: efficient electricity usage
     """
     # initialise weights
-    weights = np.ones([1, 5])
+    weights = np.ones([1, 4])
     # extract priorities for main- and sub-criteria
     priorities_main = priorities(pairwise_comparison_main)
-    priorities_eff_grid = priorities(pairwise_comparison_efficient_grid)
     priorities_pol_objectives = priorities(pairwise_comparison_political_objectives)
     # combine weights of main and sub-criteria
-    weights[0, 0] = priorities_eff_grid[0] * priorities_main[0]
-    weights[0, 1] = priorities_eff_grid[1] * priorities_main[0]
-    weights[0, 2] = priorities_main[1]
-    weights[0, 3] = priorities_pol_objectives[0] * priorities_main[2]
-    weights[0, 4] = priorities_pol_objectives[1] * priorities_main[2]
+    weights[0, 0] = priorities_main[0]
+    weights[0, 1] = priorities_main[1]
+    weights[0, 2] = priorities_pol_objectives[0] * priorities_main[2]
+    weights[0, 3] = priorities_pol_objectives[1] * priorities_main[2]
     weights = pd.DataFrame(weights)
     return weights
 
@@ -103,9 +97,9 @@ def add_names_criteria(df):
         Containing data on evaluated criteria, columns have to correspond to criteria
     :return:
     """
-    df.columns = ['Reflection of Usage-Related Costs',
-                  'Reflection of Capacity-Related Costs',
+    df.columns = ['Efficient Grid',
                   'Fairness and Customer Acceptance',
-                  'Expansion of DER', 'Efficient Electricity Usage']
+                  'Expansion of DER',
+                  'Efficient Electricity Usage']
     return df
 
