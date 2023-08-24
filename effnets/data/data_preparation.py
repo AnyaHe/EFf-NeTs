@@ -232,7 +232,7 @@ def determine_cost_reduction_by_purchase_of_pv(
     return reduction_potential
 
 
-def determine_proxy_of_cost_reduction_der():
+def determine_proxy_of_cost_reduction_der(simplified=False):
     """
     Determine proxy for reduction potential, reduction of cost driving factors compared
     to group shares, compared are PV-owners (CG2) and PV-BESS-owners (CG4) to inflexible
@@ -241,12 +241,20 @@ def determine_proxy_of_cost_reduction_der():
     :return:
     """
     # determine parameter for cost driving factors
-    tariff_dict = {
-        1: {"name": "VT", "proxy": "Electricity Purchased"},
-        2: {"name": "MPT", "proxy": "Aggregated Peak"},
-        3: {"name": "YPT", "proxy": "Aggregated Peak"},
-        4: {"name": "CT", "proxy": "Contracted Capacity"},
-    }
+    if not simplified:
+        tariff_dict = {
+            1: {"name": "VT", "proxy": "Electricity Purchased"},
+            2: {"name": "MPT", "proxy": "Monthly Peak"},
+            3: {"name": "YPT", "proxy": "Aggregated Peak"},
+            4: {"name": "CT", "proxy": "Contracted Capacity"},
+        }
+    else:
+        tariff_dict = {
+            1: {"name": "VT", "proxy": "Cost Share"},
+            2: {"name": "MPT", "proxy": "Cost Share"},
+            3: {"name": "YPT", "proxy": "Cost Share"},
+            4: {"name": "CT", "proxy": "Cost Share"},
+        }
     # get data of base scenario
     dt = import_data()
     # Set up dataframe
@@ -276,12 +284,12 @@ def determine_proxy_of_cost_reduction_der():
 
 
 if __name__ == "__main__":
-    calculate_pv_cost_reduction_proxy = True
+    calculate_pv_cost_reduction_proxy = False
     calculate_pv_cost_reduction = False
-    calculate_cost_contribution = False
+    calculate_cost_contribution = True
     # Cost reduction through purchase of PV system
     if calculate_pv_cost_reduction_proxy:
-        reduction_potential_pv = determine_proxy_of_cost_reduction_der()
+        reduction_potential_pv = determine_proxy_of_cost_reduction_der(simplified=False)
         reduction_potential_pv.to_csv("pv_cost_reduction.csv")
     if calculate_pv_cost_reduction:
         data_dir = r"C:\Users\aheider\Downloads"
