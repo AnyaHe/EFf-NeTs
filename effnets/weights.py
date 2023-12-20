@@ -2,6 +2,8 @@ import numpy as np
 from numpy.linalg import eig
 import pandas as pd
 
+from indicators import add_names_criteria
+
 
 def get_relative_weights_stakeholder(weighting_dict, stakeholder):
     """
@@ -88,18 +90,4 @@ def extract_weights(pairwise_comparison_main,
     weights = pd.DataFrame(weights)
     return weights
 
-
-def add_names_criteria(df):
-    """
-    Help function to add names of criteria to existing dataframe with five columns
-
-    :param df: pd.DataFrame
-        Containing data on evaluated criteria, columns have to correspond to criteria
-    :return:
-    """
-    df.columns = ['Efficient Grid',
-                  'Fairness and Customer Acceptance',
-                  'Expansion of DER',
-                  'Efficient Electricity Usage']
-    return df
 

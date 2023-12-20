@@ -310,9 +310,9 @@ if __name__ == "__main__":
                                          columns=["B_1", "B_2", "B_3", "B_4"])
         # Todo: use data of CG4 here
         hh_profiles_cg4 = \
-        pd.read_excel(os.path.join(data_dir, "220530_PV_Calculations.xlsx"),
-                      sheet_name='grundverbrauch', index_col=0,
-                      parse_dates=True)[["C1", "C2", "C3", "C4"]]
+            pd.read_excel(os.path.join(data_dir, "220530_PV_Calculations.xlsx"),
+                          sheet_name='grundverbrauch', index_col=0,
+                          parse_dates=True)[["C1", "C2", "C3", "C4"]]
         pv_profiles_cg4 = pd.read_excel(
             os.path.join(data_dir, "220530_PV_Calculations.xlsx"),
             sheet_name='PV', index_col=0, parse_dates=True).loc[:,

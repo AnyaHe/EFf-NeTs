@@ -1,20 +1,34 @@
 import pandas as pd
 
 from indicators import get_fairness, get_expansion_der,\
-    get_efficient_electricity_usage, get_efficient_grid
-from weights import add_names_criteria
+    get_efficient_electricity_usage, get_efficient_grid, \
+    add_names_criteria
 
 
-def get_performance_indicators_scenario_with_names(dt, sf, af):
-    result_matrix = get_performance_indicators_scenario(dt, sf, af)
-    result_matrix.columns = \
-        ['Volumetric Tariff', 'Monthly Power Peak', 'Yearly Power Peak',
-         'Capacity Tariff']
-    result_matrix['Criteria'] = ['Efficient Grid',
-                                 'Fairness and Customer Acceptance',
-                                 'Expansion of DER',
-                                 'Efficient Electricity Usage'] # Todo: connect with add_names_criteria
-    result_matrix['Scenario'] = sf
+def get_performance_indicators_scenario_with_names(
+        dt, idx_scenario, nr_alternatives, alternative_names=None):
+    """
+    Method for calculation of indicators for specific scenario.
+
+    :param dt: pd.DataFrame
+        input data
+    :param idx_scenario: int
+        scenario to be analysed
+    :param nr_alternatives: int
+        total number of alternatives
+    :param alternative_names: list of str or None (default)
+        names of investigated alternatives, defaults to ['Volumetric Tariff',
+        'Monthly Power Peak', 'Yearly Power Peak', 'Capacity Tariff']
+    :return:
+    """
+    result_matrix = \
+        get_performance_indicators_scenario(dt, idx_scenario, nr_alternatives)
+    if alternative_names is None:
+        alternative_names = ['Volumetric Tariff', 'Monthly Power Peak',
+                             'Yearly Power Peak', 'Capacity Tariff']
+    result_matrix.columns = alternative_names
+    # result_matrix['Criteria'] = names_criteria()
+    result_matrix['Scenario'] = idx_scenario
 
     return result_matrix
 
@@ -69,25 +83,30 @@ def get_rating_scenario(dt, idx_scenario, nr_alternatives, weights):
     return overall_rating
 
 
-def get_results(dt, nr_alternatives, weights):
+def get_results(dt, nr_scenarios, nr_alternatives, weights, scenario_names=None):
     """
     Aggregating results for all scenarios
 
     :param dt: pd.DataFrame
         input data
+    :param nr_scenarios: int
+        total number of simulated scenarios
     :param nr_alternatives: int
         total number of alternatives
     :param weights: pd.DataFrame
         dataframe with weighting of indicators
+    :param scenario_names: list of str or None (default)
+        names of investigated scenarios, defaults to ['Scenario 1', 'Scenario 2',
+        'Scenario 3', 'Scenario 4']
     :return:
     """
-    results_scenario_1 = get_rating_scenario(dt, 1, nr_alternatives, weights)
-    results_scenario_2 = get_rating_scenario(dt, 2, nr_alternatives, weights)
-    results_scenario_3 = get_rating_scenario(dt, 3, nr_alternatives, weights)
-    results_scenario_4 = get_rating_scenario(dt, 4, nr_alternatives, weights)
 
-    results_final = pd.concat([results_scenario_1, results_scenario_2,
-                               results_scenario_3, results_scenario_4], axis=1)
-    results_final.columns = ['Scenario 1', 'Scenario 2', 'Scenario 3', 'Scenario 4']
+    results_final = pd.concat([
+        get_rating_scenario(
+            dt=dt, idx_scenario=i+1, nr_alternatives=nr_alternatives, weights=weights)
+        for i in range(nr_scenarios)], axis=1)
+    if scenario_names is None:
+        scenario_names = ['Scenario 1', 'Scenario 2', 'Scenario 3', 'Scenario 4']
+    results_final.columns = scenario_names
 
     return results_final

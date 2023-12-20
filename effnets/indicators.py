@@ -4,6 +4,24 @@ import numpy as np
 
 # Implementation of the indicators with functions
 
+def names_criteria():
+    return ['Efficient Grid',
+            'Fairness and Customer Acceptance',
+            'Expansion of DER',
+            'Efficient Electricity Usage']
+
+
+def add_names_criteria(df):
+    """
+    Help function to add names of criteria to existing dataframe with five columns
+
+    :param df: pd.DataFrame
+        Containing data on evaluated criteria, columns have to correspond to criteria
+    :return:
+    """
+    df.columns = names_criteria()
+    return df
+
 
 def get_relative_reduction(dt, idx_scenario, nr_alternatives, parameter):
     """
