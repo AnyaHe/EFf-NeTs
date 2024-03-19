@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 
 from data.expert_weighting import expert_pairwise_comparison_dict
 from data.data_preparation import import_data
@@ -6,6 +7,8 @@ from indicators import add_names_criteria
 from weights import get_relative_weights_stakeholder
 from results import get_results, get_performance_indicators_scenario_with_names
 
+# create results directory if it does not already exist
+os.makedirs("results", exist_ok=True)
 
 # Number of scenarios
 nr_scenarios = 4

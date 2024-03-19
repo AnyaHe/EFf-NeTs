@@ -10,6 +10,12 @@ following criteria:
 It therefore requires certain input parameters, that have to be generated previous to 
 the execution of the framework. 
 
+The indicators and logic behind can be found in the publication: 
+A. Heider, J. Huber, Y. Farhat, Y. Hertig and G. Hug, _How to choose
+a suitable network tariff? - Evaluating network tariffs under increasing
+integration of distributed energy resources_, Energy Policy, Vol. 188, 2024,
+DOI: 10.1016/j.enpol.2024.114050. Please also cite the paper when using this framework.
+
 
 ## Usage Details
 
