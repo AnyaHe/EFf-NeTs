@@ -15,6 +15,8 @@ A. Heider, J. Huber, Y. Farhat, Y. Hertig and G. Hug, _How to choose
 a suitable network tariff? - Evaluating network tariffs under increasing
 integration of distributed energy resources_, Energy Policy, Vol. 188, 2024,
 DOI: 10.1016/j.enpol.2024.114050. Please also cite the paper when using this framework.
+The branch _published_version_energy_policy_ is a stored version of the code and data 
+that was used in the published paper.
 
 
 ## Usage Details
